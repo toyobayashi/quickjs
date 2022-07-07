@@ -59,7 +59,7 @@ typedef sig_t sighandler_t;
 
 #if !defined(_WIN32)
 /* enable the os.Worker API. IT relies on POSIX threads */
-#define USE_WORKER
+// #define USE_WORKER
 #endif
 
 #ifdef USE_WORKER
@@ -453,7 +453,7 @@ typedef JSModuleDef *(JSInitModuleFunc)(JSContext *ctx,
                                         const char *module_name);
 
 
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(EMSCRIPTEN)
 static JSModuleDef *js_module_loader_so(JSContext *ctx,
                                         const char *module_name)
 {
