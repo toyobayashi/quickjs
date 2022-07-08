@@ -7,7 +7,7 @@ include(CMakeDependentOption)
 option(QJS_CONFIG_BIGNUM "QJS_CONFIG_BIGNUM" ON)
 option(QJS_CONFIG_CHECK_JSVALUE "QJS_CONFIG_CHECK_JSVALUE" OFF)
 cmake_dependent_option(QJS_CONFIG_LTO "QJS_CONFIG_LTO" ON "NOT EMSCRIPTEN" OFF)
-cmake_dependent_option(QJS_CONFIG_ATOMICS "QJS_CONFIG_ATOMICS" ON "NOT EMSCRIPTEN" OFF)
+cmake_dependent_option(QJS_CONFIG_ATOMICS "QJS_CONFIG_ATOMICS" ON "NOT WIN32;NOT EMSCRIPTEN" OFF)
 cmake_dependent_option(QJS_USE_WORKER "QJS_USE_WORKER" ON "NOT WIN32;NOT EMSCRIPTEN" OFF)
 
 set(QJS_LIB_NAME ${PROJECT_NAME})
@@ -29,16 +29,13 @@ endif()
 
 if(WIN32)
   add_compile_definitions("__USE_MINGW_ANSI_STDIO")
-  execute_process(COMMAND type VERSION
-                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                  OUTPUT_VARIABLE QJS_VERSION)
+  set(QJS_VERSION "2021-03-27")
 else()
   execute_process(COMMAND cat VERSION
                   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                   OUTPUT_VARIABLE QJS_VERSION)
+  string(REGEX REPLACE "\r?\n" "" QJS_VERSION ${QJS_VERSION})
 endif()
-
-string(REGEX REPLACE "\r?\n" "" QJS_VERSION ${QJS_VERSION})
 
 add_compile_definitions(
   "_GNU_SOURCE"
