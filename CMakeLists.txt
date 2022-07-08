@@ -10,8 +10,8 @@ cmake_dependent_option(QJS_CONFIG_LTO "QJS_CONFIG_LTO" ON "NOT EMSCRIPTEN" OFF)
 cmake_dependent_option(QJS_CONFIG_ATOMICS "QJS_CONFIG_ATOMICS" ON "NOT EMSCRIPTEN" OFF)
 cmake_dependent_option(QJS_USE_WORKER "QJS_USE_WORKER" ON "NOT WIN32;NOT EMSCRIPTEN" OFF)
 
-set(QJS_LIB_NAME quickjs)
-set(QJS_LIB_LTO_NAME quickjs.lto)
+set(QJS_LIB_NAME ${PROJECT_NAME})
+set(QJS_LIB_LTO_NAME "${PROJECT_NAME}.lto")
 set(QJSC_NAME qjsc)
 set(QJS_NAME qjs)
 
@@ -102,13 +102,11 @@ if(NOT EMSCRIPTEN)
     target_link_libraries(${QJSC_NAME} ${QJS_LIB_NAME} ${QJS_EXE_LINK_LIBS})
   endif()
 
-  set(QJS_SRC qjs.c ${CMAKE_CURRENT_BINARY_DIR}/repl.c)
-
   add_custom_command(OUTPUT repl.c
     COMMAND ${QJSC_NAME} -c -o ${CMAKE_CURRENT_BINARY_DIR}/repl.c -m ${CMAKE_CURRENT_SOURCE_DIR}/repl.js
     DEPENDS ${QJSC_NAME}
     VERBATIM)
-  
+
   if(QJS_CONFIG_BIGNUM)
     add_custom_command(OUTPUT qjscalc.c
       COMMAND ${QJSC_NAME} -fbignum -c -o ${CMAKE_CURRENT_BINARY_DIR}/qjscalc.c ${CMAKE_CURRENT_SOURCE_DIR}/qjscalc.js
@@ -129,14 +127,18 @@ if(NOT EMSCRIPTEN)
 
   install(TARGETS ${QJSC_NAME} DESTINATION "bin")
   install(TARGETS ${QJS_NAME} DESTINATION "bin")
+
+  if(NOT WIN32)
+    install(CODE "execute_process(COMMAND \${CMAKE_COMMAND} -E create_symlink \"./${QJS_NAME}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/bin/qjscalc\")")
+  endif()
 endif()
 
-install(TARGETS ${QJS_LIB_NAME} DESTINATION "lib/${CMAKE_LIBRARY_ARCHITECTURE}")
-install(TARGETS ${QJS_LIB_NAME} DESTINATION "lib/quickjs")
+install(TARGETS ${QJS_LIB_NAME} DESTINATION "lib/${PROJECT_NAME}")
+# install(TARGETS ${QJS_LIB_NAME} DESTINATION "lib/${CMAKE_LIBRARY_ARCHITECTURE}")
 if(QJS_CONFIG_LTO)
-  install(TARGETS ${QJS_LIB_LTO_NAME} DESTINATION "lib/quickjs")
-  install(TARGETS ${QJS_LIB_LTO_NAME} DESTINATION "lib/${CMAKE_LIBRARY_ARCHITECTURE}")
+  install(TARGETS ${QJS_LIB_LTO_NAME} DESTINATION "lib/${PROJECT_NAME}")
+  # install(TARGETS ${QJS_LIB_LTO_NAME} DESTINATION "lib/${CMAKE_LIBRARY_ARCHITECTURE}")
 endif()
 
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/quickjs.h ${CMAKE_CURRENT_SOURCE_DIR}/quickjs-libc.h
-        DESTINATION "include/quickjs")
+        DESTINATION "include/${PROJECT_NAME}")
