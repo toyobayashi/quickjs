@@ -13,6 +13,7 @@ cmake_dependent_option(QJS_USE_WORKER "QJS_USE_WORKER" ON "NOT WIN32;NOT EMSCRIP
 set(QJS_LIB_NAME quickjs)
 set(QJS_LIB_LTO_NAME quickjs.lto)
 set(QJSC_NAME qjsc)
+set(QJS_NAME qjs)
 
 set(QJS_LIB_SRC
   cutils.c
@@ -27,6 +28,7 @@ if(QJS_CONFIG_BIGNUM)
 endif()
 
 if(WIN32)
+  add_compile_definitions("__USE_MINGW_ANSI_STDIO")
   execute_process(COMMAND type VERSION
                   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                   OUTPUT_VARIABLE QJS_VERSION)
@@ -79,6 +81,54 @@ if(EMSCRIPTEN)
       target_link_options(${QJS_LIB_LTO_NAME} INTERFACE "-sUSE_PTHREADS=1")
     endif()
   endif()
+endif()
+
+if(NOT EMSCRIPTEN)
+  if(WIN32)
+    set(QJS_EXE_LINK_LIBS m)
+  else()
+    set(QJS_EXE_LINK_LIBS m dl pthread)
+  endif()
+
+  add_executable(${QJSC_NAME} qjsc.c)
+  target_compile_definitions(${QJSC_NAME} PRIVATE
+    "CONFIG_CC=\"${CMAKE_C_COMPILER}\""
+    "CONFIG_PREFIX=\"${CMAKE_INSTALL_PREFIX}\"")
+  if(QJS_CONFIG_LTO)
+    target_compile_definitions(${QJSC_NAME} PRIVATE
+      "CONFIG_LTO")
+    target_link_libraries(${QJSC_NAME} ${QJS_LIB_LTO_NAME} ${QJS_EXE_LINK_LIBS})
+  else()
+    target_link_libraries(${QJSC_NAME} ${QJS_LIB_NAME} ${QJS_EXE_LINK_LIBS})
+  endif()
+
+  set(QJS_SRC qjs.c ${CMAKE_CURRENT_BINARY_DIR}/repl.c)
+
+  add_custom_command(OUTPUT repl.c
+    COMMAND ${QJSC_NAME} -c -o ${CMAKE_CURRENT_BINARY_DIR}/repl.c -m ${CMAKE_CURRENT_SOURCE_DIR}/repl.js
+    DEPENDS ${QJSC_NAME}
+    VERBATIM)
+  
+  if(QJS_CONFIG_BIGNUM)
+    add_custom_command(OUTPUT qjscalc.c
+      COMMAND ${QJSC_NAME} -fbignum -c -o ${CMAKE_CURRENT_BINARY_DIR}/qjscalc.c ${CMAKE_CURRENT_SOURCE_DIR}/qjscalc.js
+      DEPENDS ${QJSC_NAME}
+      VERBATIM)
+  endif()
+
+  if(QJS_CONFIG_BIGNUM)
+    add_executable(${QJS_NAME} qjs.c repl.c qjscalc.c)
+  else()
+    add_executable(${QJS_NAME} qjs.c repl.c)
+  endif()
+
+  if(NOT WIN32)
+    target_link_options(${QJS_NAME} PRIVATE "-rdynamic")
+  endif()
+  target_link_libraries(${QJS_NAME} ${QJS_LIB_NAME} ${QJS_EXE_LINK_LIBS})
+
+  install(TARGETS ${QJSC_NAME} DESTINATION "bin")
+  install(TARGETS ${QJS_NAME} DESTINATION "bin")
 endif()
 
 install(TARGETS ${QJS_LIB_NAME} DESTINATION "lib/${CMAKE_LIBRARY_ARCHITECTURE}")
