@@ -27,14 +27,14 @@ if(QJS_CONFIG_BIGNUM)
   set(QJS_LIB_SRC ${QJS_LIB_SRC} libbf.c)
 endif()
 
+set(QJS_VERSION "2021-03-27")
 if(WIN32)
   add_compile_definitions("__USE_MINGW_ANSI_STDIO")
-  set(QJS_VERSION "2021-03-27")
-else()
-  execute_process(COMMAND cat VERSION
-                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                  OUTPUT_VARIABLE QJS_VERSION)
-  string(REGEX REPLACE "\r?\n" "" QJS_VERSION ${QJS_VERSION})
+# else()
+#   execute_process(COMMAND cat VERSION
+#                   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+#                   OUTPUT_VARIABLE QJS_VERSION)
+#   string(REGEX REPLACE "\r?\n" "" QJS_VERSION ${QJS_VERSION})
 endif()
 
 add_compile_definitions(
