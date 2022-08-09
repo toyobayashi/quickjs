@@ -28,14 +28,15 @@
 #include <inttypes.h>
 #include <string.h>
 #include <assert.h>
-#include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <time.h>
 #if defined(__APPLE__)
 #include <malloc/malloc.h>
+#include <unistd.h>
 #elif defined(__linux__)
 #include <malloc.h>
+#include <unistd.h>
 #endif
 
 #include "cutils.h"
@@ -453,9 +454,10 @@ int main(int argc, char **argv)
             help();
         }
     }
-
+#ifdef CONFIG_BIGNUM
     if (load_jscalc)
         bignum_ext = 1;
+#endif
 
     if (trace_memory) {
         js_trace_malloc_init(&trace_data);

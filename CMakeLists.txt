@@ -6,7 +6,7 @@ include(CMakeDependentOption)
 
 option(QJS_CONFIG_BIGNUM "QJS_CONFIG_BIGNUM" ON)
 option(QJS_CONFIG_CHECK_JSVALUE "QJS_CONFIG_CHECK_JSVALUE" OFF)
-cmake_dependent_option(QJS_CONFIG_LTO "QJS_CONFIG_LTO" ON "NOT EMSCRIPTEN" OFF)
+cmake_dependent_option(QJS_CONFIG_LTO "QJS_CONFIG_LTO" ON "NOT EMSCRIPTEN;NOT MSVC" OFF)
 cmake_dependent_option(QJS_CONFIG_ATOMICS "QJS_CONFIG_ATOMICS" ON "NOT WIN32;NOT EMSCRIPTEN" OFF)
 cmake_dependent_option(QJS_USE_WORKER "QJS_USE_WORKER" ON "NOT WIN32;NOT EMSCRIPTEN" OFF)
 
@@ -28,7 +28,7 @@ if(QJS_CONFIG_BIGNUM)
 endif()
 
 set(QJS_VERSION "2021-03-27")
-if(WIN32)
+if(WIN32 AND NOT MSVC)
   add_compile_definitions("__USE_MINGW_ANSI_STDIO")
 # else()
 #   execute_process(COMMAND cat VERSION
@@ -37,8 +37,13 @@ if(WIN32)
 #   string(REGEX REPLACE "\r?\n" "" QJS_VERSION ${QJS_VERSION})
 endif()
 
+if(NOT MSVC)
 add_compile_definitions(
   "_GNU_SOURCE"
+)
+endif()
+
+add_compile_definitions(
   "CONFIG_VERSION=\"${QJS_VERSION}\""
 )
 
@@ -82,7 +87,9 @@ endif()
 
 if(NOT EMSCRIPTEN)
   if(WIN32)
-    set(QJS_EXE_LINK_LIBS m)
+    if(NOT MSVC)
+      set(QJS_EXE_LINK_LIBS m)
+    endif()
   else()
     set(QJS_EXE_LINK_LIBS m dl pthread)
   endif()
