@@ -27,12 +27,14 @@
 #include <inttypes.h>
 #include <string.h>
 #include <assert.h>
-#include <errno.h>
-#if !defined(_WIN32)
+#if !defined(_MSC_VER)
 #include <unistd.h>
-#include <sys/wait.h>
 #else
 #include "win/getopt.h"
+#endif
+#include <errno.h>
+#if !defined(_WIN32)
+#include <sys/wait.h>
 #endif
 
 #include "cutils.h"
