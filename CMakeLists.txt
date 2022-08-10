@@ -1,9 +1,10 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.15)
 
 project(quickjs)
 
 include(CMakeDependentOption)
 
+option(QJS_STATIC_VCRT "QJS_STATIC_VCRT" ON)
 option(QJS_CONFIG_BIGNUM "QJS_CONFIG_BIGNUM" ON)
 option(QJS_CONFIG_CHECK_JSVALUE "QJS_CONFIG_CHECK_JSVALUE" OFF)
 cmake_dependent_option(QJS_CONFIG_LTO "QJS_CONFIG_LTO" ON "NOT EMSCRIPTEN;NOT MSVC" OFF)
@@ -60,6 +61,15 @@ if(QJS_CONFIG_ATOMICS)
 endif()
 
 add_library(${QJS_LIB_NAME} STATIC ${QJS_LIB_SRC})
+if(MSVC)
+  target_link_options(${QJS_LIB_NAME} PUBLIC
+    "legacy_stdio_float_rounding.obj"
+  )
+  if(QJS_STATIC_VCRT)
+    set_target_properties(${QJS_LIB_NAME} PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  endif()
+endif()
+
 if(QJS_CONFIG_CHECK_JSVALUE)
   target_compile_definitions(${QJS_LIB_NAME} PUBLIC "CONFIG_CHECK_JSVALUE")
 endif()
@@ -95,6 +105,10 @@ if(NOT EMSCRIPTEN)
   endif()
 
   add_executable(${QJSC_NAME} qjsc.c)
+  if(MSVC AND QJS_STATIC_VCRT)
+    set_target_properties(${QJSC_NAME} PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  endif()
+
   target_compile_definitions(${QJSC_NAME} PRIVATE
     "CONFIG_CC=\"${CMAKE_C_COMPILER}\""
     "CONFIG_PREFIX=\"${CMAKE_INSTALL_PREFIX}\"")
@@ -122,6 +136,9 @@ if(NOT EMSCRIPTEN)
     add_executable(${QJS_NAME} qjs.c repl.c qjscalc.c)
   else()
     add_executable(${QJS_NAME} qjs.c repl.c)
+  endif()
+  if(MSVC AND QJS_STATIC_VCRT)
+    set_target_properties(${QJS_NAME} PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
   endif()
 
   if(NOT WIN32)
