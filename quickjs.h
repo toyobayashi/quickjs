@@ -38,7 +38,7 @@ extern "C" {
   #define CAST(t) (t)
 #endif
 
-#ifdef defined(WIN32) || defined(_WIN32) || defined(__CYGWIN__) || defined(__MINGW__)
+#if defined(WIN32) || defined(_WIN32) || defined(__CYGWIN__) || defined(__MINGW__)
   #ifdef __GNUC__
   #define JS_MODULE_EXPORT __attribute__((dllexport))
   #else
