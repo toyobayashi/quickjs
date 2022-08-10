@@ -25,15 +25,16 @@
 #ifndef CUTILS_H
 #define CUTILS_H
 
-#include <stdlib.h>
-#include <inttypes.h>
-
 #ifdef _MSC_VER
   #include <windows.h>
   #include <intrin.h>
+  #include <BaseTsd.h>
 #else 
   #include <sys/time.h>
 #endif
+
+#include <stdlib.h>
+#include <inttypes.h>
 
 /* set if CPU is big endian */
 #undef WORDS_BIGENDIAN
@@ -46,7 +47,7 @@
   #define __maybe_unused
   #define __attribute__(x)
   #define __attribute(x)
-  typedef intptr_t ssize_t;
+  typedef SSIZE_T ssize_t;
   #define printf_like(A, B) /*__attribute__((format(printf, (A), (B))))*/
 #else
   #define likely(x)       __builtin_expect(!!(x), 1)

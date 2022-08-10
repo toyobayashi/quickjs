@@ -29,9 +29,7 @@
 #include <string.h>
 #include <assert.h>
 #ifdef _MSC_VER
-#include <BaseTsd.h>
 #include <float.h>
-typedef SSIZE_T ssize_t;
 #define INF (DBL_MAX+DBL_MAX)
 #else
 #include <sys/time.h>
