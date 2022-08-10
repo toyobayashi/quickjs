@@ -463,7 +463,7 @@ typedef JSModuleDef *(JSInitModuleFunc)(JSContext *ctx,
                                         const char *module_name);
 
 
-#if defined(_WIN32) || defined(EMSCRIPTEN)
+#if defined(EMSCRIPTEN)
 static JSModuleDef *js_module_loader_so(JSContext *ctx,
                                         const char *module_name)
 {
@@ -478,6 +478,9 @@ static JSModuleDef *js_module_loader_so(JSContext *ctx,
     void *hd;
     JSInitModuleFunc *init;
     char *filename;
+#ifdef _WIN32
+    wchar_t wfilename[MAX_PATH] = { 0 };
+#endif
     
     if (!strchr(module_name, '/')) {
         /* must add a '/' so that the DLL is not searched in the
@@ -492,7 +495,12 @@ static JSModuleDef *js_module_loader_so(JSContext *ctx,
     }
     
     /* C module */
+#ifdef _WIN32
+    MultiByteToWideChar(CP_UTF8, 0, filename, -1, wfilename, MAX_PATH);
+    hd = LoadLibraryW(wfilename);
+#else
     hd = dlopen(filename, RTLD_NOW | RTLD_LOCAL);
+#endif
     if (filename != module_name)
         js_free(ctx, filename);
     if (!hd) {
@@ -501,7 +509,11 @@ static JSModuleDef *js_module_loader_so(JSContext *ctx,
         goto fail;
     }
 
+#ifdef _WIN32
+    init = (JSInitModuleFunc*) GetProcAddress(hd, "js_init_module");
+#else
     init = dlsym(hd, "js_init_module");
+#endif
     if (!init) {
         JS_ThrowReferenceError(ctx, "could not load module filename '%s': js_init_module not found",
                                module_name);
@@ -514,7 +526,11 @@ static JSModuleDef *js_module_loader_so(JSContext *ctx,
                                module_name);
     fail:
         if (hd)
+#ifdef _WIN32
+            FreeLibrary(hd);
+#else
             dlclose(hd);
+#endif
         return NULL;
     }
     return m;
@@ -574,12 +590,20 @@ int js_module_set_import_meta(JSContext *ctx, JSValueConst func_val,
     return 0;
 }
 
+#if defined(_WIN32)
+  #define NATIVE_LIBRARY_SUFFIX ".dll"
+#elif defined(__APPLE__)
+  #define NATIVE_LIBRARY_SUFFIX ".dylib"
+#else
+  #define NATIVE_LIBRARY_SUFFIX ".so"
+#endif
+
 JSModuleDef *js_module_loader(JSContext *ctx,
                               const char *module_name, void *opaque)
 {
     JSModuleDef *m;
 
-    if (has_suffix(module_name, ".so")) {
+    if (has_suffix(module_name, NATIVE_LIBRARY_SUFFIX) || has_suffix(module_name, ".qjs") || has_suffix(module_name, ".module")) {
         m = js_module_loader_so(ctx, module_name);
     } else {
         size_t buf_len;
