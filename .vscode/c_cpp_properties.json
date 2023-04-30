@@ -4,18 +4,19 @@
       "${default}"
     ],
     "defines": [
-      "CONFIG_VERSION=\"2021-03-07\""
+      "CONFIG_VERSION=\"2021-03-07\"",
+      "CONFIG_ATOMICS"
     ]
   },
   "configurations": [
     {
       "name": "Win32",
       "defines": ["${defines}", "_DEBUG", "UNICODE", "_UNICODE", "_CRT_SECURE_NO_WARNINGS"],
-      "compilerPath": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.32.31326\\bin\\Hostx64\\x64\\cl.exe",
-      "windowsSdkVersion": "10.0.19041.0",
+      "compilerPath": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.35.32215\\bin\\Hostx64\\x64\\cl.exe",
+      "windowsSdkVersion": "10.0.22621.0",
       "intelliSenseMode": "windows-msvc-x64",
       "cStandard": "c11",
-      "cppStandard": "c++14",
+      "cppStandard": "c++17",
       "includePath": ["${includePath}"]
     },
     {

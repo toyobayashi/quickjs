@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -9,6 +10,39 @@ struct thread_ctx {
   void* arg;
   pthread_t self;
 };
+
+int pthread_once(pthread_once_t* guard, void (*callback)(void)) {
+  if (guard->ran) {
+    return 0;
+  }
+
+  DWORD result;
+  HANDLE existing_event, created_event;
+
+  created_event = CreateEvent(NULL, 1, 0, NULL);
+  if (created_event == 0) {
+    errno = ENOMEM;
+    return ENOMEM;
+  }
+
+  existing_event = InterlockedCompareExchangePointer(&guard->event,
+                                                     created_event,
+                                                     NULL);
+
+  if (existing_event == NULL) {
+    callback();
+
+    result = SetEvent(created_event);
+    assert(result);
+    guard->ran = 1;
+
+  } else {
+    CloseHandle(created_event);
+    result = WaitForSingleObject(existing_event, INFINITE);
+    assert(result == WAIT_OBJECT_0);
+  }
+  return 0;
+}
 
 int pthread_mutex_lock (pthread_mutex_t *mutex) {
   EnterCriticalSection(mutex);

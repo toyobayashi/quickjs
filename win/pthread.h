@@ -41,6 +41,13 @@ typedef union
   int __align;
 } pthread_condattr_t;
 
+typedef struct {
+  unsigned char ran;
+  HANDLE event;
+} pthread_once_t;
+
+int pthread_once(pthread_once_t* guard, void (*callback)(void));
+
 int pthread_mutex_lock(pthread_mutex_t *mutex);
 int pthread_mutex_unlock(pthread_mutex_t *mutex);
 int pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *mutexattr);

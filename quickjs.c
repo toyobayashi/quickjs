@@ -53807,7 +53807,17 @@ typedef struct JSAtomicsWaiter {
     int32_t *ptr;
 } JSAtomicsWaiter;
 
+#ifdef _MSC_VER
+static pthread_mutex_t js_atomics_mutex;
+static pthread_once_t js_atomics_once = { 0 };
+static void js_atomics_once_init() {
+    if (pthread_mutex_init(&js_atomics_mutex, NULL))
+        abort();
+}
+#else
 static pthread_mutex_t js_atomics_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
 static struct list_head js_atomics_waiter_list =
     LIST_HEAD_INIT(js_atomics_waiter_list);
 
@@ -53966,6 +53976,8 @@ static const JSCFunctionListEntry js_atomics_obj[] = {
 void JS_AddIntrinsicAtomics(JSContext *ctx)
 {
     /* add Atomics as autoinit object */
+    if (pthread_once(&js_atomics_once, js_atomics_once_init))
+        abort();
     JS_SetPropertyFunctionList(ctx, ctx->global_obj, js_atomics_obj, countof(js_atomics_obj));
 }
 
