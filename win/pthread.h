@@ -71,7 +71,7 @@ int pthread_cond_signal(pthread_cond_t *cond);
 int pthread_cond_broadcast(pthread_cond_t *cond);
 
 #define CLOCK_REALTIME 0
-int clock_gettime(int X, struct timeval *tv);
+int clock_gettime(int clock_id, struct timespec *tp);
 
 #ifdef __cplusplus
 }

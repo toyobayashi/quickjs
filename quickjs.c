@@ -53810,7 +53810,7 @@ typedef struct JSAtomicsWaiter {
 #ifdef _MSC_VER
 static pthread_mutex_t js_atomics_mutex;
 static pthread_once_t js_atomics_once = { 0 };
-static void js_atomics_once_init() {
+static void js_atomics_once_init(void) {
     if (pthread_mutex_init(&js_atomics_mutex, NULL))
         abort();
 }

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <process.h>
+#include <stdint.h>
 #include "pthread.h"
 
 struct thread_ctx {
@@ -216,41 +217,33 @@ getFILETIMEoffset()
     return (t);
 }
 
-int
-clock_gettime(int X, struct timeval *tv)
+#define POW10_7                 10000000
+#define DELTA_EPOCH_IN_100NS    INT64_C(116444736000000000)
+
+int clock_gettime(int clock_id, struct timespec *tp)
 {
-    LARGE_INTEGER           t;
-    FILETIME            f;
-    double                  microseconds;
-    static LARGE_INTEGER    offset;
-    static double           frequencyToMicroseconds;
-    static int              initialized = 0;
-    static BOOL             usePerformanceCounter = 0;
+    uint64_t t;
+    LARGE_INTEGER pf, pc;
+    union {
+        uint64_t u64;
+        FILETIME ft;
+    }  ct, et, kt, ut;
 
-    if (!initialized) {
-        LARGE_INTEGER performanceFrequency;
-        initialized = 1;
-        usePerformanceCounter = QueryPerformanceFrequency(&performanceFrequency);
-        if (usePerformanceCounter) {
-            QueryPerformanceCounter(&offset);
-            frequencyToMicroseconds = (double)performanceFrequency.QuadPart / 1000000.;
-        } else {
-            offset = getFILETIMEoffset();
-            frequencyToMicroseconds = 10.;
+    switch(clock_id) {
+    case CLOCK_REALTIME:
+        {
+            GetSystemTimeAsFileTime(&ct.ft);
+            t = ct.u64 - DELTA_EPOCH_IN_100NS;
+            tp->tv_sec = t / POW10_7;
+            tp->tv_nsec = ((int) (t % POW10_7)) * 100;
+
+            return 0;
         }
-    }
-    if (usePerformanceCounter) QueryPerformanceCounter(&t);
-    else {
-        GetSystemTimeAsFileTime(&f);
-        t.QuadPart = f.dwHighDateTime;
-        t.QuadPart <<= 32;
-        t.QuadPart |= f.dwLowDateTime;
+
+    default:
+        break;
     }
 
-    t.QuadPart -= offset.QuadPart;
-    microseconds = (double)t.QuadPart / frequencyToMicroseconds;
-    t.QuadPart = microseconds;
-    tv->tv_sec = t.QuadPart / 1000000;
-    tv->tv_usec = t.QuadPart % 1000000;
-    return (0);
+    errno = EINVAL;
+    return EINVAL;
 }
