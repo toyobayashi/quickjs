@@ -54000,9 +54000,11 @@ static const JSCFunctionListEntry js_atomics_obj[] = {
 
 void JS_AddIntrinsicAtomics(JSContext *ctx)
 {
-    /* add Atomics as autoinit object */
+#ifdef _MSC_VER
     if (pthread_once(&js_atomics_once, js_atomics_once_init))
         abort();
+#endif
+    /* add Atomics as autoinit object */
     JS_SetPropertyFunctionList(ctx, ctx->global_obj, js_atomics_obj, countof(js_atomics_obj));
 }
 
